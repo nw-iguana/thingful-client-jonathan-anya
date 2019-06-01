@@ -1,33 +1,54 @@
 import React, { Component } from 'react'
 import TokenService from '../../services/token-service'
 import { Button, Input } from '../Utils/Utils'
+import AuthApiService from '../../services/auth-api-service'
 
 export default class LoginForm extends Component {
   static defaultProps = {
-    onLoginSuccess: () => {}
+    onLoginSuccess: () => { }
   }
 
   state = { error: null }
 
-  handleSubmitBasicAuth = ev => {
+  handleSubmitJwtAuth = ev => {
     ev.preventDefault()
+    this.setState({ error: null })
     const { user_name, password } = ev.target
 
-    TokenService.saveAuthToken(
-      TokenService.makeBasicAuthToken(user_name.value, password.value)
-    )
+    AuthApiService.postLogin({ user_name: user_name.value, password: password.value })
+      .then(res => {
+        console.log(res)
+        //clear them out after submit
+        user_name.value = ''
+        password.value = ''
 
-    user_name.value = ''
-    password.value = ''
-    this.props.onLoginSuccess()
+        TokenService.saveAuthToken(res.authToken)
+        this.props.onLoginSuccess()
+      })
+      .catch(res => {
+        this.setState({ error: res.error })
+      })
   }
+
+  // handleSubmitBasicAuth = ev => {
+  //   ev.preventDefault()
+  //   const { user_name, password } = ev.target
+
+  //   TokenService.saveAuthToken(
+  //     TokenService.makeBasicAuthToken(user_name.value, password.value)
+  //   )
+
+  //   user_name.value = ''
+  //   password.value = ''
+  //   this.props.onLoginSuccess()
+  // }
 
   render() {
     const { error } = this.state
     return (
       <form
         className='LoginForm'
-        onSubmit={this.handleSubmitBasicAuth}
+        onSubmit={this.handleSubmitJwtAuth}
       >
         <div role='alert'>
           {error && <p className='red'>{error}</p>}
